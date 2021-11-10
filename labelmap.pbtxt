@@ -1,0 +1,53 @@
+item {
+  id: 1
+  name: 'dress'
+}
+
+item {
+  id: 2
+  name: 'shirt'
+}
+
+item {
+  id: 3
+  name: 'skirt'
+}
+
+item {
+  id: 4
+  name: 'jacket'
+}
+
+item {
+  id: 5
+  name: 'coat'
+}
+
+item {
+  id: 6
+  name: 'Tshirt'
+}
+item {
+  id: 7
+  name: 'shorts'
+}
+item {
+  id: 8
+  name: 'boots'
+}
+item {
+  id: 9
+  name: 'trousers'
+}
+item {
+  id: 10
+  name: 'sunglasses'
+}
+item {
+  id: 11
+  name: 'shoes'
+}
+item {
+  id: 12
+  name: 'sportshoes'
+}
