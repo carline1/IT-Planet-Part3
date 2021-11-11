@@ -13,7 +13,7 @@ def find_similar(request):
     return JsonResponse(content)
 
 def find_similar_by_path(image_path):
-    image_path = r"D:\Projects\Python_Projects\IT-Planet-Part3\image" + image_path + ".jpg"
+    image_path = "image" + '/' + image_path + ".jpg"
     img = Image.open(image_path)
     img_class, cutted_img_arr = find_class_and_cut_img(image_path, detection_graph)
     cutted_img = Image.fromarray(np.uint8(cutted_img_arr)).convert('RGB')
