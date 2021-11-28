@@ -312,23 +312,23 @@ def cut_images(
         cv2.imwrite(path_to_image, image_cutted)
         
 class FeatureExtractor:
-    def __init__(self):
-        # Use VGG-16 as the architecture and ImageNet for the weight
-        base_model = VGG16(weights='imagenet')
-        # Customize the model to return features from fully-connected layer
-        self.model = Model(inputs=base_model.input, outputs=base_model.get_layer('fc1').output)
-    def extract(self, img):
-        # Resize the image
-        img = img.resize((224, 224))
-        # Convert the image color space
-        img = img.convert('RGB')
-        # Reformat the image
-        x = image.img_to_array(img)
-        x = np.expand_dims(x, axis=0)
-        x = preprocess_input(x)
-        # Extract Features
-        feature = self.model.predict(x)[0]
-        return feature / np.linalg.norm(feature)
+	def __init__(self):
+		# Use VGG-16 as the architecture and ImageNet for the weight
+		base_model = VGG16(weights='imagenet')
+		# Customize the model to return features from fully-connected layer
+		self.model = Model(inputs=base_model.input, outputs=base_model.get_layer('fc1').output)
+	def extract(self, img):
+		# Resize the image
+		img = img.resize((224, 224))
+		# Convert the image color space
+		img = img.convert('RGB')
+		# Reformat the image
+		x = image.img_to_array(img)
+		x = np.expand_dims(x, axis=0)
+		x = preprocess_input(x)
+		# Extract Features
+		feature = self.model.predict(x)[0]
+		return feature / np.linalg.norm(feature)
     
 def extract_features_from_classes(
     PATH_TO_CUTTED_IMAGES,
@@ -365,6 +365,25 @@ def get_all_saved_features(FEATURES_DIR):
     features = np.array(features)
 
     return features
+	
+
+def get_all_saved_features_by_classes(FEATURES_DIR):
+    features = {}
+    cut_dirs_classes = os.listdir(FEATURES_DIR)
+    for cut_dirs_class in cut_dirs_classes:
+        for feature_path in Path("./" + FEATURES_DIR + '/' + cut_dirs_class).glob("*.npy"):
+            if cut_dirs_class in features.keys():
+#                 features[cut_dirs_class] = np.append(features[cut_dirs_class], np.array(np.load(feature_path)))
+#             else:
+#                 features[cut_dirs_class] = np.array(np.load(feature_path))
+                features[cut_dirs_class].append(np.load(feature_path))
+            else:
+                features[cut_dirs_class] = [np.load(feature_path)]
+
+    for feature_class in features.keys():
+        features[feature_class] = np.array(features[feature_class])
+#     features = np.array(features)
+    return features
 
 
 def get_cut_img_paths(PATH_TO_CUTTED_IMAGES):
@@ -381,21 +400,21 @@ def get_cut_img_paths(PATH_TO_CUTTED_IMAGES):
 
 
 def find_class_and_cut_img(img_path, detection_graph):
-    image = load_image_into_numpy_array(Image.open(image_path))
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    image_rembg = rembg(img_path)
-    cv2.resize(image, (image_rembg.shape[0], image_rembg.shape[1]), interpolation=cv2.INTER_AREA)
-    image_rembg_expanded = np.expand_dims(image_rembg, axis=0)
-    output_dict = run_inference_for_single_image(image_rembg, detection_graph)
-    index_of_max_score = np.where(output_dict['detection_scores'] == max(output_dict['detection_scores']))
-    class_path = category_index[output_dict['detection_classes'][index_of_max_score][0]]['name']
+	image = load_image_into_numpy_array(Image.open(img_path))
+	image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+	image_rembg = rembg(img_path)
+	cv2.resize(image, (image_rembg.shape[0], image_rembg.shape[1]), interpolation=cv2.INTER_AREA)
+	image_rembg_expanded = np.expand_dims(image_rembg, axis=0)
+	output_dict = run_inference_for_single_image(image_rembg, detection_graph)
+	index_of_max_score = np.where(output_dict['detection_scores'] == max(output_dict['detection_scores']))
+	class_path = category_index[output_dict['detection_classes'][index_of_max_score][0]]['name']
 
-    box_with_max_score = output_dict['detection_boxes'][index_of_max_score][0]
-    #     print('box_with_max_score', box_with_max_score)
-    ymin, xmin, ymax, xmax = box2cords(box_with_max_score, image.shape[1], image.shape[0])
-    image_cutted = image[ymin:ymax, xmin:xmax]
+	box_with_max_score = output_dict['detection_boxes'][index_of_max_score][0]
+	#     print('box_with_max_score', box_with_max_score)
+	ymin, xmin, ymax, xmax = box2cords(box_with_max_score, image.shape[1], image.shape[0])
+	image_cutted = image[ymin:ymax, xmin:xmax]
 
-    return class_path, image_cutted
+	return class_path, image_cutted
 
 
 def find_similar_img(img, img_class, img_paths, features, fe, count_of_similar):
@@ -405,23 +424,24 @@ def find_similar_img(img, img_class, img_paths, features, fe, count_of_similar):
     dists = np.linalg.norm(features - query, axis=1)
     # Extract 30 images that have lowest distance
     ids = np.argsort(dists)[:count_of_similar]
-    #     print(len(dists), len(img_paths))
+#     print(len(dists), len(img_paths))
+#     print(img_paths)
     similar_img_names = [img_paths[id].split('\\')[-1] for id in ids]
     scores = [(dists[id], img_paths[id]) for id in ids]
-    #     print(scores)
+#     print(scores)
     # Visualize the result
-    axes = []
-    fig = plt.figure(figsize=(8, 8))
+    axes=[]
+    fig=plt.figure(figsize=(8,8))
     for a in range(count_of_similar):
         score = scores[a]
-        axes.append(fig.add_subplot(5, 6, a + 1))
-        subplot_title = str(score[0])
-        axes[-1].set_title(subplot_title)
+        axes.append(fig.add_subplot(5, 6, a+1))
+        subplot_title=str(score[0])
+        axes[-1].set_title(subplot_title)  
         plt.axis('off')
         plt.imshow(Image.open(score[1]))
     fig.tight_layout()
     plt.show()
-
+    
     return similar_img_names
 
 
@@ -440,15 +460,18 @@ def add_img_to_db(img, img_name, detection_graph, PATH_TO_IMAGES_DIR, fe):
     print(folder + ' done')
 
 
-def initilize():
-    category_index = label_map_util.create_category_index_from_labelmap(PATH_TO_LABELS, use_display_name=True)
+def initilize(category_index):
     detection_graph = tf_tuning()
     cut_images(category_index, backup_last_index_path, IMAGE_PATHS, PATH_TO_CUTTED_IMAGES, last_index, detection_graph)
 
-fe = FeatureExtractor()
 
-extract_features_from_classes(PATH_TO_CUTTED_IMAGES, backup_last_index_file_name, FEATURES_DIR, fe)
+def category_index():
+	return label_map_util.create_category_index_from_labelmap(PATH_TO_LABELS, use_display_name=True)
+    
+category_index = category_index()
+# extract_features_from_classes(PATH_TO_CUTTED_IMAGES, backup_last_index_file_name, FEATURES_DIR, fe)
 
+#fe = FeatureExtractor()
 detection_graph = tf_tuning()
 features = get_all_saved_features(FEATURES_DIR)
 cut_img_paths = get_cut_img_paths(PATH_TO_CUTTED_IMAGES)
